@@ -9,7 +9,7 @@ type User struct {
 }
 
 type Drink struct {
-	Id    primitive.ObjectID `bson:"_id" json:"_id"`
-	Name  string             `bson:"name" json:"name"`
-	Bebeu bool               `bson:"bebeu" json:"bebeu"`
+	Id   primitive.ObjectID `bson:"_id" json:"_id"`
+	Name string             `bson:"name" json:"name"`
+	Done bool               `bson:"done" json:"done"`
 }
