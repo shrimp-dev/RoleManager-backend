@@ -45,20 +45,20 @@ func (d *dbClient) getDrinkDatabase() *mongo.Collection {
 	return usersDb
 }
 
-func (d *dbClient) CreateNewUser(usr models.User) error {
+func (d *dbClient) CreateNewUser(usr models.User) (string, error) {
 	usr.Id = primitive.NewObjectID()
 
 	userDb := d.getUserDatabase()
-	_, err := userDb.InsertOne(context.TODO(), usr)
-	return err
+	id, err := userDb.InsertOne(context.TODO(), usr)
+	return id.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
-func (d *dbClient) CreateNewDrink(drink models.Drink) error {
+func (d *dbClient) CreateNewDrink(drink models.Drink) (string, error) {
 	drink.Id = primitive.NewObjectID()
 
 	drinkDb := d.getDrinkDatabase()
-	_, err := drinkDb.InsertOne(context.TODO(), drink)
-	return err
+	id, err := drinkDb.InsertOne(context.TODO(), drink)
+	return id.InsertedID.(primitive.ObjectID).Hex(), err
 }
 
 func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.User, error) {
