@@ -12,7 +12,7 @@ func main() {
 		panic(err)
 	}
 
-	err = client.CreateNewUser(models.User{Name: "Edson", Path: "teste"})
+	_, err = client.CreateNewUser(models.User{Name: "Edson", Path: "teste"})
 	if err != nil {
 		panic(err)
 	}

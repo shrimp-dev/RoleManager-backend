@@ -17,8 +17,8 @@ type dbClient struct {
 }
 
 type DbClient interface {
-	CreateNewUser(usr models.User) error
-	CreateNewDrink(drink models.Drink) error
+	CreateNewUser(usr models.User) (models.User, error)
+	CreateNewDrink(drink models.Drink) (models.Drink, error)
 	FindUserById(usrId primitive.ObjectID) (models.User, error)
 	FindAllUsers() ([]models.User, error)
 	FindDrinksByUser(usrId primitive.ObjectID) ([]models.Drink, error)
@@ -45,20 +45,20 @@ func (d *dbClient) getDrinkDatabase() *mongo.Collection {
 	return usersDb
 }
 
-func (d *dbClient) CreateNewUser(usr models.User) (string, error) {
+func (d *dbClient) CreateNewUser(usr models.User) (models.User, error) {
 	usr.Id = primitive.NewObjectID()
 
 	userDb := d.getUserDatabase()
-	id, err := userDb.InsertOne(context.TODO(), usr)
-	return id.InsertedID.(primitive.ObjectID).Hex(), err
+	_, err := userDb.InsertOne(context.TODO(), usr)
+	return usr, err
 }
 
-func (d *dbClient) CreateNewDrink(drink models.Drink) (string, error) {
+func (d *dbClient) CreateNewDrink(drink models.Drink) (models.Drink, error) {
 	drink.Id = primitive.NewObjectID()
 
 	drinkDb := d.getDrinkDatabase()
-	id, err := drinkDb.InsertOne(context.TODO(), drink)
-	return id.InsertedID.(primitive.ObjectID).Hex(), err
+	_, err := drinkDb.InsertOne(context.TODO(), drink)
+	return drink, err
 }
 
 func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.User, error) {

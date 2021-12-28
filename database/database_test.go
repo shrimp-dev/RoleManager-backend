@@ -19,7 +19,7 @@ func TestCreateUser(t *testing.T) {
 	client, err := database.NewClient()
 	assert.Nil(t, err)
 
-	err = client.CreateNewUser(models.User{Name: "foo", Path: "bar"})
+	_, err = client.CreateNewUser(models.User{Name: "foo", Path: "bar"})
 	assert.Nil(t, err)
 
 }
