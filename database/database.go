@@ -18,7 +18,10 @@ type dbClient struct {
 
 type DbClient interface {
 	CreateNewUser(usr models.User) error
+	CreateNewDrink(drink models.Drink) error
+	FindUserById(usrId primitive.ObjectID) (models.User, error)
 	FindAllUsers() ([]models.User, error)
+	FindDrinksByUser(usrId primitive.ObjectID) ([]models.Drink, error)
 }
 
 func NewClient() (DbClient, error) {
@@ -33,7 +36,12 @@ func NewClient() (DbClient, error) {
 }
 
 func (d *dbClient) getUserDatabase() *mongo.Collection {
-	usersDb := d.Client.Database("testv1").Collection("users")
+	usersDb := d.Client.Database("testv2").Collection("users")
+	return usersDb
+}
+
+func (d *dbClient) getDrinkDatabase() *mongo.Collection {
+	usersDb := d.Client.Database("testv2").Collection("drinks")
 	return usersDb
 }
 
@@ -45,12 +53,34 @@ func (d *dbClient) CreateNewUser(usr models.User) error {
 	return err
 }
 
-func (d *dbClient) AddDrinkToUser(usr models.User) error {
-	usr.Id = primitive.NewObjectID()
+func (d *dbClient) CreateNewDrink(drink models.Drink) error {
+	drink.Id = primitive.NewObjectID()
 
-	userDb := d.getUserDatabase()
-	_, err := userDb.InsertOne(context.TODO(), usr)
+	drinkDb := d.getDrinkDatabase()
+	_, err := drinkDb.InsertOne(context.TODO(), drink)
 	return err
+}
+
+func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.User, error) {
+
+	cur, err := d.getUserDatabase().Find(context.TODO(), bson.D{{"_id", usrId}}, nil)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	var user models.User
+
+	cur.Next(context.TODO())
+	//Create a value into which the single document can be decoded
+	var elem models.User
+	err = cur.Decode(&elem)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	user = elem
+
+	return user, nil
 }
 
 func (d *dbClient) FindAllUsers() ([]models.User, error) {
@@ -75,5 +105,28 @@ func (d *dbClient) FindAllUsers() ([]models.User, error) {
 	}
 
 	return users, nil
+}
 
+func (d *dbClient) FindDrinksByUser(usrId primitive.ObjectID) ([]models.Drink, error) {
+
+	cur, err := d.getDrinkDatabase().Find(context.TODO(), bson.D{{"usrId", usrId}}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var drinks []models.Drink
+
+	for cur.Next(context.TODO()) {
+		//Create a value into which the single document can be decoded
+		var elem models.Drink
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		drinks = append(drinks, elem)
+
+	}
+
+	return drinks, nil
 }

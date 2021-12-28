@@ -22,5 +22,17 @@ func main() {
 		panic(err)
 	}
 
+	client.CreateNewDrink(models.Drink{UsrId: v[0].Id, Name: "Tequila"})
+	if err != nil {
+		panic(err)
+	}
+
+	d, err := client.FindDrinksByUser(v[0].Id)
+	if err != nil {
+		panic(err)
+	}
+
 	fmt.Println(v)
+	fmt.Println(d)
+
 }
