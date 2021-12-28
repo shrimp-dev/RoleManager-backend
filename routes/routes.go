@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -22,13 +23,14 @@ func (r *Router) GenerateHandler() *mux.Router {
 	// d.HandleFunc("/{id}", r.GetDrinkHandler).Methods("GET")
 	// d.HandleFunc("/", GetDrinksHandler).Methods("GET")
 	// d.HandleFunc("/", UpdateDrinkHandler).Methods("PUT")
+	d.HandleFunc("/done", r.UpdateDrinkDoneHandler).Methods("PUT")
 	// d.HandleFunc("/{id}", DeleteDrinkhandler).Methods("DELETE")
 	p := router.PathPrefix("/user").Subrouter()
 	p.HandleFunc("/", r.CreateUserHandler).Methods("POST")
 	p.HandleFunc("/{id}", r.GetUserHandler).Methods("GET")
 	p.HandleFunc("/", r.GetUsersHandler).Methods("GET")
 	p.HandleFunc("/{id}/drinks", r.GetDrinksFromUserHandler).Methods("GET")
-	// p.HandleFunc("/", UpdateUserHandler).Methods("PUT")
+	p.HandleFunc("/{id}", r.UpdateUserHandler).Methods("PUT")
 	// p.HandleFunc("/", DeleteUserHandler).Methods("DELETE")
 	return router
 }
@@ -68,12 +70,44 @@ func (r *Router) CreateDrinkHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write(res)
 }
 
-// func (r *Router) GetDrinkHandler(w http.ResponseWriter, req *http.Request) {
-// 	w.Write([]byte("Get One Drink"))
-// }
-// func GetDrinksHandler(w http.ResponseWriter, req *http.Request) {
-// 	w.Write([]byte("Get Multiple Drinks"))
-// }
+type updateDrinkDoneRequest struct {
+	Ids  []string `bson:"ids" json:"ids"`
+	Done bool     `bson:"done" json:"done"`
+}
+
+func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request) {
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
+		return
+	}
+	var bdJn updateDrinkDoneRequest
+	if err := json.Unmarshal(body, &bdJn); err != nil {
+		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
+		return
+	}
+	var objId_ids []primitive.ObjectID
+	for _, id := range bdJn.Ids {
+		if objId, err := primitive.ObjectIDFromHex(id); err != nil {
+			http.Error(w, "Invalid id in request", http.StatusBadRequest)
+			return
+		} else {
+			objId_ids = append(objId_ids, objId)
+		}
+	}
+	drinks, err := r.Client.UpdateDrinksByIds(objId_ids, bdJn.Done)
+	if err != nil {
+		http.Error(w, "Error while updating drinks", http.StatusBadRequest)
+		return
+	}
+	res, err := json.Marshal(drinks)
+	if err != nil {
+		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
+		return
+	}
+	w.Write(res)
+}
+
 func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -99,12 +133,6 @@ func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Reque
 	w.Write(res)
 }
 
-// func UpdateDrinkHandler(w http.ResponseWriter, req *http.Request) {
-// 	w.Write([]byte("Update One Drinks"))
-// }
-// func DeleteDrinkhandler(w http.ResponseWriter, req *http.Request) {
-// 	w.Write([]byte("Delete One Drinks"))
-// }
 func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -176,9 +204,35 @@ func (r *Router) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write(res)
 }
 
-// func UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
-// 	w.Write([]byte("Create One Drink"))
-// }
-// func DeleteUserHandler(w http.ResponseWriter, req *http.Request) {
-// 	w.Write([]byte("Create One Drink"))
-// }
+func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
+	vars := mux.Vars(req)
+	id := vars["id"]
+	usrId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		http.Error(w, "Invalid id sent in request", http.StatusBadRequest)
+		return
+	}
+
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
+		return
+	}
+	var bdJn bson.M
+	if err := json.Unmarshal(body, &bdJn); err != nil {
+		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
+		return
+	}
+
+	users, err := r.Client.UpdateUserById(usrId, bdJn)
+	if err != nil {
+		http.Error(w, "Invalid update query", http.StatusBadRequest)
+		return
+	}
+	res, err := json.Marshal(users)
+	if err != nil {
+		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
+		return
+	}
+	w.Write(res)
+}
