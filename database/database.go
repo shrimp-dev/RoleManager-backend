@@ -50,8 +50,8 @@ func (d *dbClient) getDrinkDatabase() *mongo.Collection {
 	return usersDb
 }
 func (d *dbClient) getDebtDatabase() *mongo.Collection {
-	usersDb := d.Client.Database("testv2").Collection("debt")
-	return usersDb
+	debtDb := d.Client.Database("testv2").Collection("debt")
+	return debtDb
 }
 
 // User
