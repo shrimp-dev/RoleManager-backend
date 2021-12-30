@@ -14,3 +14,18 @@ type Drink struct {
 	Name  string             `bson:"name" json:"name"`
 	Done  bool               `bson:"done" json:"done"`
 }
+
+type Debtor struct {
+	Id     primitive.ObjectID `bson:"_id" json:"_id"`
+	Amount float32            `bson:"amount" json:"amount"`
+	Paid   bool               `bson:"paid" json:"paid"`
+}
+
+type Debt struct {
+	Id          primitive.ObjectID `bson:"_id" json:"_id"`
+	Description string             `bson:"description" json:"description"`
+	Creditor    primitive.ObjectID `bson:"creditor" json:"creditor"`
+	Debtors     []Debtor           `bson:"debtors" json:"debtors"`
+	Amount      float32            `bson:"amount" json:"amount"`
+	Open        bool               `bson:"open" json:"open"`
+}
