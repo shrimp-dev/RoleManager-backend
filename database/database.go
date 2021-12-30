@@ -19,11 +19,16 @@ type dbClient struct {
 type DbClient interface {
 	CreateNewUser(usr models.User) (models.User, error)
 	CreateNewDrink(drink models.Drink) (models.Drink, error)
+	CreateNewDebt(debt models.Debt) (models.Debt, error)
 	FindUserById(usrId primitive.ObjectID) (models.User, error)
 	FindAllUsers() ([]models.User, error)
-	FindDrinksByUser(usrId primitive.ObjectID) ([]models.Drink, error)
+	FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error)
+	FindAllDebts() ([]models.Debt, error)
 	UpdateUserById(usrId primitive.ObjectID, upd interface{}) (models.User, error)
 	UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error)
+	PayDebt(query bson.M) (models.Debt, error)
+	FindDebtById(debtId primitive.ObjectID) (models.Debt, error)
+	FindDebtsOfUser(usrId primitive.ObjectID) ([]models.Debt, error)
 }
 
 func NewClient() (DbClient, error) {
@@ -36,15 +41,17 @@ func NewClient() (DbClient, error) {
 
 	return dbCl, nil
 }
-
 func (d *dbClient) getUserDatabase() *mongo.Collection {
 	usersDb := d.Client.Database("testv2").Collection("users")
 	return usersDb
 }
-
 func (d *dbClient) getDrinkDatabase() *mongo.Collection {
 	usersDb := d.Client.Database("testv2").Collection("drinks")
 	return usersDb
+}
+func (d *dbClient) getDebtDatabase() *mongo.Collection {
+	debtDb := d.Client.Database("testv2").Collection("debt")
+	return debtDb
 }
 
 // User
@@ -55,7 +62,6 @@ func (d *dbClient) CreateNewUser(usr models.User) (models.User, error) {
 	_, err := userDb.InsertOne(context.TODO(), usr)
 	return usr, err
 }
-
 func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, upd interface{}) (models.User, error) {
 	userDb := d.getUserDatabase()
 	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": upd})
@@ -65,7 +71,6 @@ func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, upd interface{}) (mo
 	}
 	return doc_upd, nil
 }
-
 func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.User, error) {
 
 	cur, err := d.getUserDatabase().Find(context.TODO(), bson.D{{"_id", usrId}}, nil)
@@ -87,7 +92,6 @@ func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.User, error) {
 
 	return user, nil
 }
-
 func (d *dbClient) FindAllUsers() ([]models.User, error) {
 
 	cur, err := d.getUserDatabase().Find(context.TODO(), bson.D{{}}, nil)
@@ -120,10 +124,9 @@ func (d *dbClient) CreateNewDrink(drink models.Drink) (models.Drink, error) {
 	_, err := drinkDb.InsertOne(context.TODO(), drink)
 	return drink, err
 }
+func (d *dbClient) FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error) {
 
-func (d *dbClient) FindDrinksByUser(usrId primitive.ObjectID) ([]models.Drink, error) {
-
-	cur, err := d.getDrinkDatabase().Find(context.TODO(), bson.D{{"usrId", usrId}}, nil)
+	cur, err := d.getDrinkDatabase().Find(context.TODO(), bson.M{"usrId": usrId}, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +147,6 @@ func (d *dbClient) FindDrinksByUser(usrId primitive.ObjectID) ([]models.Drink, e
 
 	return drinks, nil
 }
-
 func (d *dbClient) UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error) {
 	drinkDb := d.getDrinkDatabase()
 	filter := bson.M{
@@ -170,4 +172,91 @@ func (d *dbClient) UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]
 		return nil, err
 	}
 	return drinks, nil
+}
+
+// Debt
+func (d *dbClient) CreateNewDebt(debt models.Debt) (models.Debt, error) {
+	debt.Id = primitive.NewObjectID()
+	debt.Open = true
+
+	debtDb := d.getDebtDatabase()
+	_, err := debtDb.InsertOne(context.TODO(), debt)
+	return debt, err
+}
+func (d *dbClient) FindDebtById(debtId primitive.ObjectID) (models.Debt, error) {
+	debtDb := d.getDebtDatabase()
+	var debt models.Debt
+	if err := debtDb.FindOne(context.Background(), bson.M{"_id": debtId}).Decode(&debt); err != nil {
+		return models.Debt{}, err
+	}
+	return debt, nil
+}
+func (d *dbClient) FindDebtsOfUser(usrId primitive.ObjectID) ([]models.Debt, error) {
+	filter := bson.M{
+		"debtors._id": usrId,
+	}
+	cur, err := d.getDebtDatabase().Find(context.TODO(), filter, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var debts []models.Debt
+
+	for cur.Next(context.TODO()) {
+		//Create a value into which the single document can be decoded
+		var elem models.Debt
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		debts = append(debts, elem)
+
+	}
+
+	return debts, nil
+}
+func (d *dbClient) FindAllDebts() ([]models.Debt, error) {
+	cur, err := d.getDebtDatabase().Find(context.TODO(), bson.D{{}}, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var debts []models.Debt
+
+	for cur.Next(context.TODO()) {
+		//Create a value into which the single document can be decoded
+		var elem models.Debt
+		err := cur.Decode(&elem)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		debts = append(debts, elem)
+
+	}
+
+	return debts, nil
+}
+func (d *dbClient) PayDebt(query bson.M) (models.Debt, error) {
+	debtDb := d.getDebtDatabase()
+	var debt models.Debt
+	query_options := options.FindOneAndUpdate()
+	rd := options.After
+	query_options.ReturnDocument = &rd
+	if err := debtDb.FindOneAndUpdate(context.Background(),
+		bson.M{
+			"_id":         query["_id"].(primitive.ObjectID),
+			"debtors._id": query["usrId"].(primitive.ObjectID),
+		},
+		bson.M{
+			"$set": bson.M{
+				"debtors.$.paid": query["paid"].(bool),
+			},
+		},
+		query_options,
+	).Decode(&debt); err != nil {
+		return models.Debt{}, err
+	}
+	return debt, nil
 }
