@@ -39,6 +39,7 @@ type Request struct {
 	Description string   `bson:"description" json:"description"`
 	Creditor    string   `bson:"creditor" json:"creditor"`
 	Amount      float32  `bson:"amount" json:"amount"`
+	Paid        bool     `bson:"paid" json:"paid"`
 
 	Debtors []struct {
 		Id     string  `bson:"_id" json:"_id"`

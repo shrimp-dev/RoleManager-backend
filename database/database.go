@@ -30,7 +30,7 @@ type DbClient interface {
 	FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error)
 	FindAllDrinks(usrId primitive.ObjectID) ([]models.Drink, error)
 	FindAllDebts() ([]models.Debt, error)
-	UpdateUserById(usrId primitive.ObjectID, upd interface{}) (models.User, error)
+	UpdateUserById(usrId primitive.ObjectID, usr models.User) (models.User, error)
 	UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error)
 	PayDebt(query bson.M) (models.Debt, error)
 	FindDebtById(debtId primitive.ObjectID) (models.Debt, error)
@@ -72,9 +72,15 @@ func (d *dbClient) CreateNewUser(usr models.User) (models.User, error) {
 	return usr, err
 }
 
-func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, upd interface{}) (models.User, error) {
+func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, usr models.User) (models.User, error) {
 	userDb := d.getUserDatabase()
-	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": upd})
+
+	userUpdate := struct {
+		Name string
+		Path string
+	}{usr.Name, usr.Path}
+
+	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": userUpdate})
 	var doc_upd models.User
 	if err := result_fnu.Decode(&doc_upd); err != nil {
 		return models.User{}, err

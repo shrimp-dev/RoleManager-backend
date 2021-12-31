@@ -272,7 +272,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn bson.M
+	var bdJn models.User
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -382,7 +382,7 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn map[string]bool
+	var bdJn models.Request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -390,7 +390,7 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	debt, err := r.Client.PayDebt(bson.M{
 		"_id":   id,
 		"usrId": usrId,
-		"paid":  bdJn["paid"],
+		"paid":  bdJn.Paid,
 	})
 	if err != nil {
 		http.Error(w, "Error updating debt", http.StatusBadRequest)
