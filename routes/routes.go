@@ -237,10 +237,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn struct {
-		Name string `bson:"name" json:"name"`
-		Path string `bson:"path" json:"path"`
-	}
+	var bdJn models.User
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -248,6 +245,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 
 	users, err := r.Client.UpdateUserById(usrId, bdJn)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "Invalid update query", http.StatusBadRequest)
 		return
 	}
@@ -278,11 +276,6 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 	var debtors []models.Debtor
 	debt_remaining := bdJn.Amount
 	for _, debtor := range bdJn.Debtors {
-		id, err := primitive.ObjectIDFromHex(debtor.Id)
-		if err != nil {
-			http.Error(w, "Invalid id in debtor", http.StatusBadRequest)
-			return
-		}
 		if debtor.Amount == 0 {
 			http.Error(w, "Invalid amount in debtor", http.StatusBadRequest)
 			return
@@ -294,11 +287,10 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		debtors = append(debtors, models.Debtor{
-			Id:     id,
+			Id:     debtor.Id,
 			Amount: amount,
 		})
 	}
-	fmt.Print(bdJn)
 	if debt_remaining > float32(0.1) {
 		http.Error(w, "The value paid by all debtors is lower than the debt value", http.StatusBadRequest)
 		return
@@ -326,20 +318,12 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	str_id := vars["id"]
-	if str_id == "" {
-		http.Error(w, "Missing id in request", http.StatusBadRequest)
-		return
-	}
 	id, err := primitive.ObjectIDFromHex(str_id)
 	if err != nil {
 		http.Error(w, "Invalid id in request", http.StatusBadRequest)
 		return
 	}
 	str_usrId := vars["usrId"]
-	if str_usrId == "" {
-		http.Error(w, "Missing usrId in request", http.StatusBadRequest)
-		return
-	}
 	usrId, err := primitive.ObjectIDFromHex(str_usrId)
 	if err != nil {
 		http.Error(w, "Invalid usrId in request", http.StatusBadRequest)
@@ -350,7 +334,9 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn map[string]bool
+	var bdJn struct {
+		Paid bool `json:"paid"`
+	}
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -358,7 +344,7 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	debt, err := r.Client.PayDebt(bson.M{
 		"_id":   id,
 		"usrId": usrId,
-		"paid":  bdJn["paid"],
+		"paid":  bdJn.Paid,
 	})
 	if err != nil {
 		http.Error(w, "Error updating debt", http.StatusBadRequest)
