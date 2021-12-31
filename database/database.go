@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"drinkBack/models"
+	"drinkBack/utils"
 	"errors"
 	"log"
 
@@ -75,12 +76,24 @@ func (d *dbClient) CreateNewUser(usr models.User) (models.User, error) {
 func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, usr models.User) (models.User, error) {
 	userDb := d.getUserDatabase()
 
-	userUpdate := struct {
-		Name string
-		Path string
-	}{usr.Name, usr.Path}
+	update := make(bson.M)
+	if usr.Name != "" {
+		update["name"] = usr.Name
+	}
+	if usr.Path != "" {
+		if err := utils.ValidateUserPath(usr.Path); err != nil {
+			return models.User{}, err
+		}
+		update["path"] = usr.Path
+	}
+	if len(update) == 0 {
+		return models.User{}, errors.New("no update in body")
+	}
 
-	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": userUpdate})
+	query_options := options.FindOneAndUpdate()
+	rd := options.After
+	query_options.ReturnDocument = &rd
+	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": update}, query_options)
 	var doc_upd models.User
 	if err := result_fnu.Decode(&doc_upd); err != nil {
 		return models.User{}, err
@@ -220,7 +233,6 @@ func (d *dbClient) UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]
 // Debt
 func (d *dbClient) CreateNewDebt(debt models.Debt) (models.Debt, error) {
 	debt.Id = primitive.NewObjectID()
-	debt.Open = true
 
 	debtDb := d.getDebtDatabase()
 	_, err := debtDb.InsertOne(context.TODO(), debt)
@@ -287,10 +299,10 @@ func (d *dbClient) FindAllDebts() ([]models.Debt, error) {
 
 func (d *dbClient) PayDebt(query bson.M) (models.Debt, error) {
 	debtDb := d.getDebtDatabase()
-	var debt models.Debt
 	query_options := options.FindOneAndUpdate()
 	rd := options.After
 	query_options.ReturnDocument = &rd
+	var debt models.Debt
 	if err := debtDb.FindOneAndUpdate(context.Background(),
 		bson.M{
 			"_id":         query["_id"].(primitive.ObjectID),

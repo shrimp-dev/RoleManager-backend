@@ -3,11 +3,11 @@ package routes
 import (
 	"drinkBack/database"
 	"drinkBack/models"
+	"drinkBack/utils"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
@@ -73,14 +73,12 @@ func (r *Router) CreateDrinkHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.Drink
+	var bdJn models.Request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	error_id, _ := primitive.ObjectIDFromHex("000000000000000000000000")
-
-	if (bdJn.UsrId == error_id) || (bdJn.Name == "") {
+	if bdJn.Name == "" {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -108,33 +106,12 @@ func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn bson.M
+	var bdJn models.Request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	var objId_ids []primitive.ObjectID
-	for _, id := range bdJn["ids"].([]interface{}) {
-		switch id.(type) {
-		case string:
-		default:
-			http.Error(w, "Invalid ID in ids", http.StatusBadRequest)
-			return
-		}
-		if objId, err := primitive.ObjectIDFromHex(id.(string)); err != nil {
-			http.Error(w, "Invalid id in request", http.StatusBadRequest)
-			return
-		} else {
-			objId_ids = append(objId_ids, objId)
-		}
-	}
-	switch bdJn["done"].(type) {
-	case bool:
-	default:
-		http.Error(w, "Invalid Done in body", http.StatusBadRequest)
-		return
-	}
-	drinks, err := r.Client.UpdateDrinksByIds(objId_ids, bdJn["done"].(bool))
+	drinks, err := r.Client.UpdateDrinksByIds(bdJn.Ids, bdJn.Done)
 	if err != nil {
 		http.Error(w, "Error while updating drinks", http.StatusBadRequest)
 		return
@@ -150,10 +127,6 @@ func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request
 func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
-	if id == "" {
-		http.Error(w, "Missing id in request", http.StatusBadRequest)
-		return
-	}
 	usrId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "The id in the request is invalid", http.StatusBadRequest)
@@ -190,14 +163,10 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	if matched, err := regexp.Match(`(https:\/\/cdn\.discordapp\.com\/attachments\/){1}(\w|\W)*(\.png|\.jpeg|\.jpg|\.gif)$`, []byte(bdJn.Path)); err != nil {
-		http.Error(w, "Error reading user path", http.StatusBadRequest)
+	err = utils.ValidateUserPath(bdJn.Path)
+	if err != nil {
+		http.Error(w, "Invalid user path", http.StatusBadRequest)
 		return
-	} else {
-		if !matched {
-			http.Error(w, "Invalid user path", http.StatusBadRequest)
-			return
-		}
 	}
 	inserted, err := r.Client.CreateNewUser(models.User{
 		Name: bdJn.Name,
@@ -219,10 +188,6 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 func (r *Router) GetUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
-	if id == "" {
-		http.Error(w, "Missing id in request", http.StatusBadRequest)
-		return
-	}
 	usrId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "The id in the request is invalid", http.StatusBadRequest)
@@ -280,6 +245,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 
 	users, err := r.Client.UpdateUserById(usrId, bdJn)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(w, "Invalid update query", http.StatusBadRequest)
 		return
 	}
@@ -310,11 +276,6 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 	var debtors []models.Debtor
 	debt_remaining := bdJn.Amount
 	for _, debtor := range bdJn.Debtors {
-		id, err := primitive.ObjectIDFromHex(debtor.Id)
-		if err != nil {
-			http.Error(w, "Invalid id in debtor", http.StatusBadRequest)
-			return
-		}
 		if debtor.Amount == 0 {
 			http.Error(w, "Invalid amount in debtor", http.StatusBadRequest)
 			return
@@ -326,11 +287,10 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		debtors = append(debtors, models.Debtor{
-			Id:     id,
+			Id:     debtor.Id,
 			Amount: amount,
 		})
 	}
-	fmt.Print(bdJn)
 	if debt_remaining > float32(0.1) {
 		http.Error(w, "The value paid by all debtors is lower than the debt value", http.StatusBadRequest)
 		return
@@ -358,20 +318,12 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	str_id := vars["id"]
-	if str_id == "" {
-		http.Error(w, "Missing id in request", http.StatusBadRequest)
-		return
-	}
 	id, err := primitive.ObjectIDFromHex(str_id)
 	if err != nil {
 		http.Error(w, "Invalid id in request", http.StatusBadRequest)
 		return
 	}
 	str_usrId := vars["usrId"]
-	if str_usrId == "" {
-		http.Error(w, "Missing usrId in request", http.StatusBadRequest)
-		return
-	}
 	usrId, err := primitive.ObjectIDFromHex(str_usrId)
 	if err != nil {
 		http.Error(w, "Invalid usrId in request", http.StatusBadRequest)
@@ -382,7 +334,9 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.Request
+	var bdJn struct {
+		Paid bool `json:"paid"`
+	}
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
