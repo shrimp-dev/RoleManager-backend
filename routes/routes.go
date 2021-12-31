@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
@@ -167,6 +168,9 @@ func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+	if len(drinks) == 0 {
+		res = []byte("[]")
+	}
 	w.Write(res)
 }
 
@@ -184,6 +188,15 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	if bdJn.Name == "" {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
+	}
+	if matched, err := regexp.Match(`(https:\/\/cdn\.discordapp\.com\/attachments\/){1}(\w|\W)*(\.png|\.jpeg|\.jpg|\.gif)$`, []byte(bdJn.Path)); err != nil {
+		http.Error(w, "Error reading user path", http.StatusBadRequest)
+		return
+	} else {
+		if !matched {
+			http.Error(w, "Invalid user path", http.StatusBadRequest)
+			return
+		}
 	}
 	inserted, err := r.Client.CreateNewUser(models.User{
 		Name: bdJn.Name,
@@ -237,6 +250,9 @@ func (r *Router) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
+	}
+	if len(users) == 0 {
+		res = []byte("[]")
 	}
 	w.Write(res)
 }
@@ -424,6 +440,9 @@ func (r *Router) GetDebtsHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+	if len(debt) == 0 {
+		res = []byte("[]")
+	}
 	w.Write(res)
 }
 
@@ -444,6 +463,9 @@ func (r *Router) GetDebtsFromUserHandler(w http.ResponseWriter, req *http.Reques
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
+	}
+	if len(debts) == 0 {
+		res = []byte("[]")
 	}
 	w.Write(res)
 }
