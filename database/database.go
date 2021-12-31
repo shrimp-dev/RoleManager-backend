@@ -11,6 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	dbName = "testv4"
+)
+
 type dbClient struct {
 	//TODO: encapsulate client
 	Client *mongo.Client
@@ -44,17 +48,17 @@ func NewClient() (DbClient, error) {
 }
 
 func (d *dbClient) getUserDatabase() *mongo.Collection {
-	usersDb := d.Client.Database("testv2").Collection("users")
+	usersDb := d.Client.Database(dbName).Collection("users")
 	return usersDb
 }
 
 func (d *dbClient) getDrinkDatabase() *mongo.Collection {
-	usersDb := d.Client.Database("testv2").Collection("drinks")
+	usersDb := d.Client.Database(dbName).Collection("drinks")
 	return usersDb
 }
 
 func (d *dbClient) getDebtDatabase() *mongo.Collection {
-	debtDb := d.Client.Database("testv2").Collection("debt")
+	debtDb := d.Client.Database(dbName).Collection("debt")
 	return debtDb
 }
 
