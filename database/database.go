@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"drinkBack/models"
+	"errors"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -82,22 +83,21 @@ func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, upd interface{}) (mo
 }
 
 func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.User, error) {
-
-	cur, err := d.getUserDatabase().Find(context.TODO(), bson.D{{"_id", usrId}}, nil)
+	cur, err := d.getUserDatabase().Find(context.TODO(), bson.M{"_id": usrId}, nil)
 	if err != nil {
 		return models.User{}, err
 	}
-
 	var user models.User
-
-	cur.Next(context.TODO())
+	ok := cur.Next(context.TODO())
+	if !ok {
+		return models.User{}, errors.New("user not found")
+	}
 	//Create a value into which the single document can be decoded
 	var elem models.User
 	err = cur.Decode(&elem)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	user = elem
 
 	return user, nil
