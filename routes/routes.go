@@ -3,11 +3,11 @@ package routes
 import (
 	"drinkBack/database"
 	"drinkBack/models"
+	"drinkBack/utils"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
@@ -73,14 +73,12 @@ func (r *Router) CreateDrinkHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.Drink
+	var bdJn models.Request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	error_id, _ := primitive.ObjectIDFromHex("000000000000000000000000")
-
-	if (bdJn.UsrId == error_id) || (bdJn.Name == "") {
+	if bdJn.Name == "" {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
@@ -108,33 +106,12 @@ func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn bson.M
+	var bdJn models.Request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	var objId_ids []primitive.ObjectID
-	for _, id := range bdJn["ids"].([]interface{}) {
-		switch id.(type) {
-		case string:
-		default:
-			http.Error(w, "Invalid ID in ids", http.StatusBadRequest)
-			return
-		}
-		if objId, err := primitive.ObjectIDFromHex(id.(string)); err != nil {
-			http.Error(w, "Invalid id in request", http.StatusBadRequest)
-			return
-		} else {
-			objId_ids = append(objId_ids, objId)
-		}
-	}
-	switch bdJn["done"].(type) {
-	case bool:
-	default:
-		http.Error(w, "Invalid Done in body", http.StatusBadRequest)
-		return
-	}
-	drinks, err := r.Client.UpdateDrinksByIds(objId_ids, bdJn["done"].(bool))
+	drinks, err := r.Client.UpdateDrinksByIds(bdJn.Ids, bdJn.Done)
 	if err != nil {
 		http.Error(w, "Error while updating drinks", http.StatusBadRequest)
 		return
@@ -150,10 +127,6 @@ func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request
 func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
-	if id == "" {
-		http.Error(w, "Missing id in request", http.StatusBadRequest)
-		return
-	}
 	usrId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "The id in the request is invalid", http.StatusBadRequest)
@@ -190,14 +163,10 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	if matched, err := regexp.Match(`(https:\/\/cdn\.discordapp\.com\/attachments\/){1}(\w|\W)*(\.png|\.jpeg|\.jpg|\.gif)$`, []byte(bdJn.Path)); err != nil {
-		http.Error(w, "Error reading user path", http.StatusBadRequest)
+	err = utils.ValidateUserPath(bdJn.Path)
+	if err != nil {
+		http.Error(w, "Invalid user path", http.StatusBadRequest)
 		return
-	} else {
-		if !matched {
-			http.Error(w, "Invalid user path", http.StatusBadRequest)
-			return
-		}
 	}
 	inserted, err := r.Client.CreateNewUser(models.User{
 		Name: bdJn.Name,
@@ -219,10 +188,6 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 func (r *Router) GetUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
-	if id == "" {
-		http.Error(w, "Missing id in request", http.StatusBadRequest)
-		return
-	}
 	usrId, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		http.Error(w, "The id in the request is invalid", http.StatusBadRequest)
@@ -272,7 +237,10 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn bson.M
+	var bdJn struct {
+		Name string `bson:"name" json:"name"`
+		Path string `bson:"path" json:"path"`
+	}
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
