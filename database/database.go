@@ -23,6 +23,7 @@ type DbClient interface {
 	FindUserById(usrId primitive.ObjectID) (models.User, error)
 	FindAllUsers() ([]models.User, error)
 	FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error)
+	FindAllDrinks(usrId primitive.ObjectID) ([]models.Drink, error)
 	FindAllDebts() ([]models.Debt, error)
 	UpdateUserById(usrId primitive.ObjectID, upd interface{}) (models.User, error)
 	UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error)
