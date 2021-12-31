@@ -29,3 +29,20 @@ type Debt struct {
 	Amount      float32            `bson:"amount" json:"amount"`
 	Open        bool               `bson:"open" json:"open"`
 }
+
+type Request struct {
+	Id          string   `bson:"_id" json:"_id"`
+	UsrId       string   `bson:"usrId" json:"usrId"`
+	Name        string   `bson:"name" json:"name"`
+	Ids         []string `bson:"ids" json:"ids"`
+	Done        bool     `bson:"done" json:"done"`
+	Description string   `bson:"description" json:"description"`
+	Creditor    string   `bson:"creditor" json:"creditor"`
+	Amount      float32  `bson:"amount" json:"amount"`
+
+	Debtors []struct {
+		Id     string  `bson:"_id" json:"_id"`
+		Amount float32 `bson:"amount" json:"amount"`
+		Paid   bool    `bson:"paid" json:"paid"`
+	} `bson:"debtors" json:"debtors"`
+}

@@ -4,6 +4,7 @@ import (
 	"drinkBack/database"
 	"drinkBack/models"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -296,35 +297,29 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn bson.M
+	var bdJn models.Request
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	if bdJn["amount"] == nil {
+	if bdJn.Amount == 0 {
 		http.Error(w, "Missing amount in debtor", http.StatusBadRequest)
 		return
 	}
-	switch bdJn["amount"].(type) {
-	case float64:
-	default:
-		http.Error(w, "Invalid amount in debt", http.StatusBadRequest)
-		return
-	}
+
 	var debtors []models.Debtor
-	debt_remaining := float32(bdJn["amount"].(float64))
-	for _, debtor_orig := range bdJn["debtors"].([]interface{}) {
-		debtor := debtor_orig.(map[string]interface{})
-		id, err := primitive.ObjectIDFromHex(debtor["_id"].(string))
+	debt_remaining := bdJn.Amount
+	for _, debtor := range bdJn.Debtors {
+		id, err := primitive.ObjectIDFromHex(debtor.Id)
 		if err != nil {
 			http.Error(w, "Invalid id in debtor", http.StatusBadRequest)
 			return
 		}
-		if debtor["amount"] == nil {
+		if debtor.Amount == 0 {
 			http.Error(w, "Invalid amount in debtor", http.StatusBadRequest)
 			return
 		}
-		amount := float32(debtor["amount"].(float64))
+		amount := debtor.Amount
 		debt_remaining -= amount
 		if debt_remaining < float32(0) {
 			http.Error(w, "The value paid by all debtors is higher than the debt value", http.StatusBadRequest)
@@ -335,6 +330,7 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 			Amount: amount,
 		})
 	}
+	fmt.Print(bdJn)
 	if debt_remaining > float32(0.1) {
 		http.Error(w, "The value paid by all debtors is lower than the debt value", http.StatusBadRequest)
 		return
