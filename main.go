@@ -4,8 +4,6 @@ import (
 	"drinkBack/database"
 	"drinkBack/routes"
 	"net/http"
-
-	"github.com/gorilla/handlers"
 )
 
 func main() {
@@ -14,5 +12,5 @@ func main() {
 		panic(err)
 	}
 	router := routes.Router{Client: client}
-	http.ListenAndServe(":3000", handlers.CORS()(router.GenerateHandler()))
+	http.ListenAndServe(":3000", router.GenerateHandler())
 }

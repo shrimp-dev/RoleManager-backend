@@ -20,28 +20,43 @@ func (r *Router) GenerateHandler() *mux.Router {
 	router := mux.NewRouter()
 	d := router.PathPrefix("/drinks").Subrouter()
 	//Drinks
-	d.HandleFunc("/", r.CreateDrinkHandler).Methods("POST")
+	d.HandleFunc("/", r.CreateDrinkHandler).Methods("POST", "OPTIONS")
 	// d.HandleFunc("/{id}", r.GetDrinkHandler).Methods("GET")
 	// d.HandleFunc("/", GetDrinksHandler).Methods("GET")
 	// d.HandleFunc("/", UpdateDrinkHandler).Methods("PUT")
-	d.HandleFunc("/done", r.UpdateDrinkDoneHandler).Methods("PUT")
+	d.HandleFunc("/done", r.UpdateDrinkDoneHandler).Methods("PUT", "OPTIONS")
 	// d.HandleFunc("/{id}", DeleteDrinkhandler).Methods("DELETE")
 	//Users
 	p := router.PathPrefix("/user").Subrouter()
-	p.HandleFunc("/", r.CreateUserHandler).Methods("POST")
-	p.HandleFunc("/{id}", r.GetUserHandler).Methods("GET")
-	p.HandleFunc("/", r.GetUsersHandler).Methods("GET")
-	p.HandleFunc("/{id}/drinks", r.GetDrinksFromUserHandler).Methods("GET")
-	p.HandleFunc("/{id}/debts", r.GetDebtsFromUserHandler).Methods("GET")
-	p.HandleFunc("/{id}", r.UpdateUserHandler).Methods("PUT")
+	p.HandleFunc("/", r.CreateUserHandler).Methods("POST", "OPTIONS")
+	p.HandleFunc("/{id}", r.GetUserHandler).Methods("GET", "OPTIONS")
+	p.HandleFunc("/", r.GetUsersHandler).Methods("GET", "OPTIONS")
+	p.HandleFunc("/{id}/drinks", r.GetDrinksFromUserHandler).Methods("GET", "OPTIONS")
+	p.HandleFunc("/{id}/debts", r.GetDebtsFromUserHandler).Methods("GET", "OPTIONS")
+	p.HandleFunc("/{id}", r.UpdateUserHandler).Methods("PUT", "OPTIONS")
 	// p.HandleFunc("/", DeleteUserHandler).Methods("DELETE")
 	//Debt
 	de := router.PathPrefix("/debt").Subrouter()
-	de.HandleFunc("/", r.CreateDebtHandler).Methods("POST")
-	de.HandleFunc("/{id}", r.GetDebtHandler).Methods("GET")
-	de.HandleFunc("/", r.GetDebtsHandler).Methods("GET")
-	de.HandleFunc("/{id}/pay/{usrId}", r.PayDebtHandler).Methods("PUT")
+	de.HandleFunc("/", r.CreateDebtHandler).Methods("POST", "OPTIONS")
+	de.HandleFunc("/{id}", r.GetDebtHandler).Methods("GET", "OPTIONS")
+	de.HandleFunc("/", r.GetDebtsHandler).Methods("GET", "OPTIONS")
+	de.HandleFunc("/{id}/pay/{usrId}", r.PayDebtHandler).Methods("PUT", "OPTIONS")
+
+	router.Use(cors())
+
 	return router
+}
+
+func cors() mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			if req.Method == "OPTIONS" {
+				return
+			}
+			next.ServeHTTP(w, req)
+		})
+	}
 }
 
 func (r *Router) CreateDrinkHandler(w http.ResponseWriter, req *http.Request) {
