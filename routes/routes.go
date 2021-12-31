@@ -99,6 +99,7 @@ func (r *Router) CreateDrinkHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write(res)
 }
+
 func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -143,6 +144,7 @@ func (r *Router) UpdateDrinkDoneHandler(w http.ResponseWriter, req *http.Request
 	}
 	w.Write(res)
 }
+
 func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -167,6 +169,7 @@ func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Reque
 	}
 	w.Write(res)
 }
+
 func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -198,6 +201,7 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write(res)
 }
+
 func (r *Router) GetUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -222,6 +226,7 @@ func (r *Router) GetUserHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(res)
 }
+
 func (r *Router) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 	users, err := r.Client.FindAllUsers()
 	if err != nil {
@@ -235,6 +240,7 @@ func (r *Router) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(res)
 }
+
 func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -267,6 +273,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(res)
 }
+
 func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -335,6 +342,7 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write(res)
 }
+
 func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	str_id := vars["id"]
@@ -383,6 +391,7 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(res)
 }
+
 func (r *Router) GetDebtHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	str_id := vars["id"]
@@ -403,6 +412,7 @@ func (r *Router) GetDebtHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(res)
 }
+
 func (r *Router) GetDebtsHandler(w http.ResponseWriter, req *http.Request) {
 	debt, err := r.Client.FindAllDebts()
 	if err != nil {
@@ -416,6 +426,7 @@ func (r *Router) GetDebtsHandler(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Write(res)
 }
+
 func (r *Router) GetDebtsFromUserHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	str_usrId := vars["id"]
