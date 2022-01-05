@@ -6,6 +6,7 @@ import (
 	"drinkBack/utils"
 	"errors"
 	"log"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -39,7 +40,7 @@ type DbClient interface {
 }
 
 func NewClient() (DbClient, error) {
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI("mongodb://mongo:27017"))
 	if err != nil {
 		return nil, err
 	}
@@ -66,6 +67,7 @@ func (d *dbClient) getDebtDatabase() *mongo.Collection {
 
 // User
 func (d *dbClient) CreateNewUser(usr models.User) (models.User, error) {
+	fmt.Println("CreateNewUser")
 	usr.Id = primitive.NewObjectID()
 
 	userDb := d.getUserDatabase()

@@ -2,7 +2,7 @@
 version: '3'
 
 services:
-    app:
+    backenddrink:
         build:
             context: .
             dockerfile: ./backenddrink.DockerFile
@@ -12,3 +12,24 @@ services:
         #     - "443:443"
         # environment:
         #     - 
+        depends_on:
+            - 'mongo'
+
+    # MongoDB
+    mongo:
+        image: 'mongo'
+        container_name: mongo
+        ports:
+            - '27017:27017'
+        volumes:
+            - ./mongodata:/data/db
+        restart: always
+    # Mongo Express Web-based MongoDB admin interface
+    # mongo_express:
+    #     image: mongo-express
+    #     container_name: mongo_express
+    #     depends_on:
+    #         - 'mongo'
+    #     ports:
+    #         - '8081:8081'
+    #     restart: always
