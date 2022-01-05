@@ -3,6 +3,7 @@
 ## Prerequisites
 
 * Golang 1.17
+* MongoDB
 
 ## How to Install project dependencies
 
