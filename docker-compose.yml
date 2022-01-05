@@ -1,0 +1,14 @@
+
+version: '3'
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: ./backenddrink.DockerFile
+        image: backenddrink/app
+        ports:
+            - "3000:3000"
+        #     - "443:443"
+        # environment:
+        #     - 
