@@ -6,7 +6,7 @@
 
 ## How to Install project dependencies
 
-go mode tidy
+go mod tidy
 
 ## How to Run
 
