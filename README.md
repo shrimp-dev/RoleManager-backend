@@ -12,3 +12,7 @@ go mod tidy
 ## How to Run
 
 go run main.go
+
+## WARNINGS
+
+remember to fill an .env file; example in folder
