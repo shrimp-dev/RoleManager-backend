@@ -1,7 +1,7 @@
 package pix
 
 var (
-	CRC_CCITT_TABLE = []uint{
+	CRC_CCITT_TABLE = [256]uint16{
 		0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
 		0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
 		0x1231, 0x0210, 0x3273, 0x2252, 0x52B5, 0x4294, 0x72F7, 0x62D6,
@@ -37,13 +37,13 @@ var (
 	}
 )
 
-func Calculate_CRC_CCITT(buffer string) uint {
-	size := len(buffer) - 1
-	tmp := uint(0)
-	crc := uint(0xffff)
+func Calculate_CRC_CCITT(buffer string) uint16 {
+	size := uint(len(buffer))
+	tmp := uint16(0)
+	crc := uint16(0xffff)
 
-	for i := 0; i < size; i++ {
-		tmp = (crc >> 8) ^ uint(buffer[i])
+	for i := uint(0); i < size; i++ {
+		tmp = ((crc >> 8) ^ uint16(buffer[i]))
 		crc = (crc << 8) ^ CRC_CCITT_TABLE[tmp]
 	}
 
