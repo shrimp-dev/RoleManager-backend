@@ -4,12 +4,15 @@ import "fmt"
 
 const (
 	FORMAT             = "000201"
-	GUI                = "0014br.gov.bcb.pix"
+	GUI                = "br.gov.bcb.pix"
 	CATEGORY           = "0000"
 	ADITIONAL_TEMPLATE = "0503***"
 )
 
 const (
+	GUI_OPCODE       = 00
+	KEY_OPCODE       = 01
+	INFO_OPCODE      = 02
 	ACCOUNT_OPCODE   = 26
 	CATEGORY_OPCODE  = 52
 	CURRENCY_OPCODE  = 53
@@ -53,12 +56,37 @@ func (p *Pix) GeneratePixStream() string {
 }
 
 func (p *Pix) account() string {
-	accPayload := GUI + p.PixKey + p.Info
+	accPayload := p.gui() + p.key() + p.info()
 
 	accStr := getOpCodeStr(ACCOUNT_OPCODE)
 	accStr += parseStringToEmv(accPayload)
 
 	return accStr
+}
+
+func (p *Pix) key() string {
+	keyStr := getOpCodeStr(KEY_OPCODE)
+	keyStr += parseStringToEmv(p.PixKey)
+
+	return keyStr
+}
+
+func (p *Pix) gui() string {
+	guiStr := getOpCodeStr(GUI_OPCODE)
+	guiStr += parseStringToEmv(GUI)
+
+	return guiStr
+}
+
+func (p *Pix) info() string {
+	if len(p.Info) == 0 {
+		return ""
+	}
+
+	infoStr := getOpCodeStr(INFO_OPCODE)
+	infoStr += parseStringToEmv(p.Info)
+
+	return infoStr
 }
 
 func (p *Pix) category() string {
@@ -143,11 +171,11 @@ func parseStringToEmv(str string) string {
 }
 
 func contentLen(i string) string {
-	len := len(i) - 1
+	len := len(i)
 	str := fmt.Sprintf("%02d", len)
 	return str
 }
 
 func getOpCodeStr(opcode int) string {
-	return fmt.Sprint(opcode)
+	return fmt.Sprintf("%02d", opcode)
 }
