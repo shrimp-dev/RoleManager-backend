@@ -1,6 +1,9 @@
 package pix
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	FORMAT             = "000201"
@@ -38,6 +41,7 @@ type Pix struct {
 	ReciverCity string
 	Amount      float32
 	Info        string
+	Aditional   string
 }
 
 func (p *Pix) GeneratePixStream() string {
@@ -79,12 +83,17 @@ func (p *Pix) gui() string {
 }
 
 func (p *Pix) info() string {
-	if len(p.Info) == 0 {
+	info := p.Info
+	if len(info) == 0 {
 		return ""
 	}
 
+	if len(info) > 50 {
+		info = info[:50]
+	}
+
 	infoStr := getOpCodeStr(INFO_OPCODE)
-	infoStr += parseStringToEmv(p.Info)
+	infoStr += parseStringToEmv(info)
 
 	return infoStr
 }
@@ -155,7 +164,7 @@ func (p *Pix) crc16chk(msg string) string {
 	msg += contentLen("ffff")
 
 	chk := Calculate_CRC_CCITT(msg)
-	chkStr := fmt.Sprintf("%04x", chk)
+	chkStr := strings.ToUpper(fmt.Sprintf("%04x", chk))
 
 	crcStr := getOpCodeStr(CRC_OPCODE)
 	crcStr += parseStringToEmv(chkStr)
