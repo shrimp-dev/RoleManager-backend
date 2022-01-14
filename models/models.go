@@ -7,19 +7,28 @@ import (
 )
 
 type User struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Name     string             `bson:"name,omitempty" json:"name,omitempty"`
-	Email    string             `bson:"email" json:"email"`
-	Path     string             `bson:"path,omitempty" json:"path,omitempty"`
-	Password string             `bson:"password" json:"password"`
-	Salt     []byte             `bson:"salt" json:"salt"`
+	UserData
+	Password string `bson:"password" json:"password"`
+	Salt     []byte `bson:"salt" json:"salt"`
 }
 
 type UserData struct {
-	Id    primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-	Name  string             `bson:"name,omitempty" json:"name,omitempty"`
-	Email string             `bson:"email" json:"email"`
-	Path  string             `bson:"path,omitempty" json:"path,omitempty"`
+	Id             primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+	Name           string             `bson:"name,omitempty" json:"name,omitempty"`
+	Email          string             `bson:"email" json:"email"`
+	Path           string             `bson:"path,omitempty" json:"path,omitempty"`
+	PixAccounts    PixAccounts        `bson:"pixAccs,omitempty" json:"pixAccs,omitempty"`
+	WalletAccounts WalletAccounts     `bson:"walletAccs,omitempty" json:"walletAccs,omitempty"`
+}
+
+type PixAccounts struct {
+	PixPreferred uint     `bson:"pixPref,omitempty" json:"pixPref,omitempty"`
+	PixAccounts  []string `bson:"pixAccs,omitempty" json:"pixAccs,omitempty"`
+}
+
+type WalletAccounts struct {
+	WalletPreferred uint     `bson:"walletPref,omitempty" json:"walletPref,omitempty"`
+	WalletAccounts  []string `bson:"walletAccs,omitempty" json:"WalletAccs,omitempty"`
 }
 
 type Drink struct {

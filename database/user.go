@@ -34,12 +34,14 @@ func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, usr models.User) (mo
 	if usr.Name != "" {
 		update["name"] = usr.Name
 	}
+
 	if usr.Path != "" {
 		if err := utils.ValidateUserPath(usr.Path); err != nil {
 			return models.UserData{}, err
 		}
 		update["path"] = usr.Path
 	}
+
 	if len(update) == 0 {
 		return models.UserData{}, errors.New("no update in body")
 	}
@@ -48,6 +50,7 @@ func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, usr models.User) (mo
 	rd := options.After
 	query_options.ReturnDocument = &rd
 	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": update}, query_options)
+
 	var doc_upd models.UserData
 	if err := result_fnu.Decode(&doc_upd); err != nil {
 		return models.UserData{}, err
@@ -60,6 +63,7 @@ func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.UserData, erro
 	if err != nil {
 		return models.UserData{}, err
 	}
+
 	ok := cur.Next(context.TODO())
 	if !ok {
 		return models.UserData{}, errors.New("user not found")

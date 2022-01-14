@@ -18,6 +18,7 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
+
 	var bdJn models.User
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
@@ -45,27 +46,28 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
+
 	if !ok {
 		http.Error(w, "Invalid password", http.StatusBadRequest)
 		return
 	}
+
 	salt, err := utils.GenerateRandomSalt(10)
 	if err != nil {
 		http.Error(w, "Error creating user", http.StatusInternalServerError)
 		return
 	}
+
 	hash, err := utils.HashPassword(bdJn.Password, salt)
 	if err != nil {
 		http.Error(w, "Error creating user", http.StatusBadRequest)
 		return
 	}
-	inserted, err := r.Client.CreateNewUser(models.User{
-		Name:     bdJn.Name,
-		Email:    bdJn.Email,
-		Path:     bdJn.Path,
-		Password: hash,
-		Salt:     salt,
-	})
+
+	bdJn.Password = hash
+	bdJn.Salt = salt
+
+	inserted, err := r.Client.CreateNewUser(bdJn)
 	if err != nil {
 		http.Error(w, "Error inserting user to DB", http.StatusBadRequest)
 		return
@@ -105,6 +107,7 @@ func (r *Router) GetUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error getting user from DB", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(user)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
@@ -119,14 +122,17 @@ func (r *Router) GetUsersHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error getting users from DB", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(users)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	if len(users) == 0 {
 		res = []byte("[]")
 	}
+
 	w.Write(res)
 }
 
@@ -144,6 +150,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
+
 	var bdJn models.User
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
@@ -155,6 +162,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid update query", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(users)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
@@ -171,16 +179,19 @@ func (r *Router) GetDrinksFromUserHandler(w http.ResponseWriter, req *http.Reque
 		http.Error(w, "The id in the request is invalid", http.StatusBadRequest)
 		return
 	}
+
 	drinks, err := r.Client.FindDrinksOfUser(usrId)
 	if err != nil {
 		http.Error(w, "Error gathering drinks from DB", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(drinks)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	if len(drinks) == 0 {
 		res = []byte("[]")
 	}
@@ -195,16 +206,19 @@ func (r *Router) GetDebtsFromUserHandler(w http.ResponseWriter, req *http.Reques
 		http.Error(w, "Invalid usrId in request", http.StatusBadRequest)
 		return
 	}
+
 	debts, err := r.Client.FindDebtsOfUser(usrId)
 	if err != nil {
 		http.Error(w, "Error finding debts", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(debts)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	if len(debts) == 0 {
 		res = []byte("[]")
 	}
