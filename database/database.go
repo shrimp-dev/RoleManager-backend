@@ -123,10 +123,14 @@ func (d *dbClient) createSeedUser() error {
 		return fmt.Errorf("could not generate seed user. %v", err)
 	}
 	_, err = d.getUserDatabase().InsertOne(context.Background(), models.User{
-		Id:       primitive.NewObjectID(),
-		Name:     "Seed",
-		Email:    os.Getenv("SEED_MAIL"),
-		Path:     "https://cdn.discordapp.com/attachments/580125063186087966/930244138325131264/59MvRFdT_400x400.png",
+		UserData: models.UserData{
+			Id: primitive.NewObjectID(),
+			UserUpdate: models.UserUpdate{
+				Name:  "Seed",
+				Email: os.Getenv("SEED_MAIL"),
+				Path:  "https://cdn.discordapp.com/attachments/580125063186087966/930244138325131264/59MvRFdT_400x400.png",
+			},
+		},
 		Password: seedPwd,
 		Salt:     seedSalt,
 	})

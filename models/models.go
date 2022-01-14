@@ -7,20 +7,15 @@ import (
 )
 
 type User struct {
-	Id        primitive.ObjectID `bson:"_id" json:"_id"`
-	Name      string             `bson:"name" json:"name"`
-	Email     string             `bson:"email" json:"email"`
-	Path      string             `bson:"path" json:"path"`
+	UserData
 	Password  string             `bson:"password" json:"password"`
 	Salt      []byte             `bson:"salt" json:"salt"`
 	CreatedBy primitive.ObjectID `bson:"createdby" json:"createdby"`
 }
 
 type UserData struct {
+	UserUpdate
 	Id        primitive.ObjectID `bson:"_id" json:"_id"`
-	Name      string             `bson:"name" json:"name"`
-	Email     string             `bson:"email" json:"email"`
-	Path      string             `bson:"path" json:"path"`
 	CreatedBy primitive.ObjectID `bson:"createdby" json:"createdby"`
 }
 

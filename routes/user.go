@@ -77,10 +77,15 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error creating user", http.StatusBadRequest)
 		return
 	}
+
 	inserted, err := r.Client.CreateNewUser(models.User{
-		Name:      bdJn.Name,
-		Email:     bdJn.Email,
-		Path:      bdJn.Path,
+		UserData: models.UserData{
+			UserUpdate: models.UserUpdate{
+				Name:  bdJn.Name,
+				Email: bdJn.Email,
+				Path:  bdJn.Path,
+			},
+		},
 		Password:  hash,
 		Salt:      salt,
 		CreatedBy: bdJn.CreatedBy,

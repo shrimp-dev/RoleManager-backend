@@ -20,10 +20,12 @@ func (d *dbClient) CreateNewDebt(debt models.Debt) (models.Debt, error) {
 
 func (d *dbClient) FindDebtById(debtId primitive.ObjectID) (models.Debt, error) {
 	debtDb := d.getDebtDatabase()
+
 	var debt models.Debt
 	if err := debtDb.FindOne(context.Background(), bson.M{"_id": debtId}).Decode(&debt); err != nil {
 		return models.Debt{}, err
 	}
+
 	return debt, nil
 }
 

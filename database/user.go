@@ -21,10 +21,12 @@ func (d *dbClient) CreateNewUser(usr models.User) (models.UserData, error) {
 	_, err := userDb.InsertOne(context.TODO(), usr)
 
 	filtered := models.UserData{
-		Id:    usr.Id,
-		Name:  usr.Name,
-		Email: usr.Email,
-		Path:  usr.Path,
+		Id: usr.Id,
+		UserUpdate: models.UserUpdate{
+			Name:  usr.Name,
+			Email: usr.Email,
+			Path:  usr.Path,
+		},
 	}
 	return filtered, err
 }
@@ -125,10 +127,12 @@ func (d *dbClient) VerifyUserPassword(email string, password string, data *model
 	}
 	*data = models.LoginResponse{
 		UserData: models.UserData{
-			Id:    user.Id,
-			Name:  user.Name,
-			Email: user.Email,
-			Path:  user.Path,
+			Id: user.Id,
+			UserUpdate: models.UserUpdate{
+				Name:  user.Name,
+				Email: user.Email,
+				Path:  user.Path,
+			},
 		},
 		Token: token,
 	}
