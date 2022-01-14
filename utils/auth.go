@@ -86,25 +86,30 @@ func ValidatePassword(password []byte) (bool, error) {
 }
 
 // jwt
-func GenerateAuthenticationToken(id string) (string, error) {
+const (
+	AUTH   string = "AUTH_SECRET"
+	INVITE string = "INVITE_SECRET"
+)
+
+func GenerateAuthenticationToken(id string, secret string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"_id": id,
 		"exp": time.Now().Add(24 * time.Hour).Unix(),
 	})
-	tokenString, err := token.SignedString([]byte(os.Getenv("AUTH_SECRET")))
+	tokenString, err := token.SignedString([]byte(os.Getenv(secret)))
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
 }
 
-func VerifyAuthenticationToken(tokenString string, dataCollector *models.AccessTokenClaims) (bool, error) {
+func VerifyAuthenticationToken(tokenString string, secret string, dataCollector *models.AccessTokenClaims) (bool, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return false, nil //errors.New(fmt.Sprintf("Unexpected signing method: %v", token.Header["alg"]))
 		}
-		return []byte(os.Getenv("AUTH_SECRET")), nil
+		return []byte(os.Getenv(secret)), nil
 	})
 
 	if err != nil {

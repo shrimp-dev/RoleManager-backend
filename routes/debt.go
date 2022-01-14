@@ -2,6 +2,7 @@ package routes
 
 import (
 	"drinkBack/models"
+	"drinkBack/utils"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -17,13 +18,22 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
-	var bdJn models.Request
+	var bdJn struct {
+		Description string             `bson:"description,omitempty" json:"description,omitempty"`
+		Creditor    primitive.ObjectID `bson:"creditor,omitempty" json:"creditor,omitempty"`
+		Debtors     []struct {
+			Id     primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
+			Amount float32            `bson:"amount,omitempty" json:"amount,omitempty"`
+		} `bson:"debtors,omitempty" json:"debtors,omitempty"`
+		Amount float32 `bson:"amount,omitempty" json:"amount,omitempty"`
+	}
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
-	if bdJn.Amount == 0 {
-		http.Error(w, "Missing amount in debtor", http.StatusBadRequest)
+
+	if ok := utils.ValidateBody(bdJn); !ok {
+		http.Error(w, "Missing information", http.StatusBadRequest)
 		return
 	}
 
@@ -55,6 +65,8 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	debt.Debtors = debtors
+	creditor, _ := primitive.ObjectIDFromHex(req.Context().Value("usrToken").(models.AccessTokenClaims).Id)
+	debt.Creditor = creditor
 	debt, err = r.Client.CreateNewDebt(debt)
 	if err != nil {
 		http.Error(w, "Error creating new debt", http.StatusBadRequest)
@@ -71,34 +83,41 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	str_id := vars["id"]
-	id, err := primitive.ObjectIDFromHex(str_id)
+	id, err := primitive.ObjectIDFromHex(vars["id"])
 	if err != nil {
 		http.Error(w, "Invalid id in request", http.StatusBadRequest)
 		return
 	}
-	str_usrId := vars["usrId"]
-	usrId, err := primitive.ObjectIDFromHex(str_usrId)
-	if err != nil {
-		http.Error(w, "Invalid usrId in request", http.StatusBadRequest)
-		return
-	}
+	creditor, _ := primitive.ObjectIDFromHex(req.Context().Value("usrToken").(models.AccessTokenClaims).Id)
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
 	var bdJn struct {
-		Paid bool `json:"paid"`
+		Debtors []string
+		Paid    bool `json:"paid"`
 	}
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
+
+	var debtors []primitive.ObjectID
+	for i := 0; i < len(bdJn.Debtors); i++ {
+		if debtor, err := primitive.ObjectIDFromHex(bdJn.Debtors[i]); err != nil {
+			http.Error(w, "Invalid debtor in body", http.StatusBadRequest)
+			return
+		} else {
+			debtors = append(debtors, debtor)
+		}
+	}
+
 	debt, err := r.Client.PayDebt(bson.M{
-		"_id":   id,
-		"usrId": usrId,
-		"paid":  bdJn.Paid,
+		"_id":      id,
+		"creditor": creditor,
+		"debtors":  debtors,
+		"paid":     bdJn.Paid,
 	})
 	if err != nil {
 		http.Error(w, "Error updating debt", http.StatusBadRequest)

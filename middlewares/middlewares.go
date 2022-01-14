@@ -33,12 +33,27 @@ func Authenticate() mux.MiddlewareFunc {
 			b := req.Header.Get("Authorization")
 			token := strings.Replace(b, "Bearer ", "", 1)
 			var usr models.AccessTokenClaims
-			ok, err := utils.VerifyAuthenticationToken(token, &usr)
-			if err != nil || !ok {
+			if ok, err := utils.VerifyAuthenticationToken(token, utils.AUTH, &usr); err != nil || !ok {
 				http.Error(w, "Error trying to authenticate you", http.StatusUnauthorized)
 				return
 			}
 			ctx := context.WithValue(req.Context(), "usrToken", usr)
+			next.ServeHTTP(w, req.WithContext(ctx))
+		})
+	}
+}
+
+func CreateUserAuthenticate() mux.MiddlewareFunc {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			vars := mux.Vars(req)
+			token := vars["token"]
+			var creator models.AccessTokenClaims
+			if ok, err := utils.VerifyAuthenticationToken(token, utils.INVITE, &creator); err != nil || !ok {
+				http.Error(w, "Error trying to authenticate your invite", http.StatusUnauthorized)
+				return
+			}
+			ctx := context.WithValue(req.Context(), "creator", creator)
 			next.ServeHTTP(w, req.WithContext(ctx))
 		})
 	}
