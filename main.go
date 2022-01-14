@@ -24,13 +24,13 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Connected to database successfully")
+	fmt.Println("(MAIN) connected to database successfully")
 
 	router := routes.Router{Client: client}
 	port := ":" + os.Getenv("PORT")
 	if port == ":" {
 		port = ":3000"
 	}
-	fmt.Printf("Listening to %v\n", port)
+	fmt.Printf("(MAIN) listening to %v\n", port)
 	http.ListenAndServe(port, router.GenerateHandler())
 }
