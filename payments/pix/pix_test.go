@@ -1,7 +1,7 @@
 package pix_test
 
 import (
-	"drinkBack/pix"
+	"drinkBack/payments/pix"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
