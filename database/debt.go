@@ -20,10 +20,12 @@ func (d *dbClient) CreateNewDebt(debt models.Debt) (models.Debt, error) {
 
 func (d *dbClient) FindDebtById(debtId primitive.ObjectID) (models.Debt, error) {
 	debtDb := d.getDebtDatabase()
+
 	var debt models.Debt
 	if err := debtDb.FindOne(context.Background(), bson.M{"_id": debtId}).Decode(&debt); err != nil {
 		return models.Debt{}, err
 	}
+
 	return debt, nil
 }
 
@@ -81,6 +83,7 @@ func (d *dbClient) PayDebt(query bson.M) (models.Debt, error) {
 	query_options := options.FindOneAndUpdate()
 	rd := options.After
 	query_options.ReturnDocument = &rd
+
 	var debt models.Debt
 	if err := debtDb.FindOneAndUpdate(context.Background(),
 		bson.M{
