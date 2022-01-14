@@ -20,9 +20,21 @@ type UserData struct {
 }
 
 type UserUpdate struct {
-	Name  string `bson:"name,omitempty" json:"name,omitempty"`
-	Email string `bson:"email,omitempty" json:"email,omitempty"`
-	Path  string `bson:"path,omitempty" json:"path,omitempty"`
+	Name           string `bson:"name,omitempty" json:"name,omitempty"`
+	Email          string `bson:"email,omitempty" json:"email,omitempty"`
+	Path           string `bson:"path,omitempty" json:"path,omitempty"`
+	PixAccounts    PixAccounts
+	WalletAccounts WalletAccounts
+}
+
+type PixAccounts struct {
+	PixPreferred uint     `bson:"pixPref,omitempty" json:"pixPref,omitempty"`
+	PixAccounts  []string `bson:"pixAccs,omitempty" json:"pixAccs,omitempty"`
+}
+
+type WalletAccounts struct {
+	WalletPreferred uint     `bson:"walletPref,omitempty" json:"walletPref,omitempty"`
+	WalletAccounts  []string `bson:"walletAccs,omitempty" json:"WalletAccs,omitempty"`
 }
 
 type Drink struct {
