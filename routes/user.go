@@ -179,7 +179,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var bdJn models.UserUpdate
+	var bdJn models.UpdateUserRequest
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return

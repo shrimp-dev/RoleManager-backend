@@ -40,7 +40,7 @@ type DbClient interface {
 	CreateNewDebt(debt models.Debt) (models.Debt, error)
 	FindAllDebts() ([]models.Debt, error)
 	FindDebtById(debtId primitive.ObjectID) (models.Debt, error)
-	PayDebt(query bson.M) (models.Debt, error)
+	PayDebt(query models.PayDebtRequest) (models.Debt, error)
 
 	VerifyUserPassword(email string, password string, data *models.LoginResponse) (bool, error)
 }

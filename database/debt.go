@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"drinkBack/models"
+	"fmt"
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -78,7 +79,27 @@ func (d *dbClient) FindAllDebts() ([]models.Debt, error) {
 	return debts, nil
 }
 
-func (d *dbClient) PayDebt(query bson.M) (models.Debt, error) {
+func (d *dbClient) PayDebt(query models.PayDebtRequest) (models.Debt, error) {
+
+	var debtors []primitive.ObjectID
+	for i := 0; i < len(query.Debtors); i++ {
+		if debtor, err := primitive.ObjectIDFromHex(query.Debtors[i]); err != nil {
+			return models.Debt{}, fmt.Errorf("invalid debtor")
+		} else {
+			debtors = append(debtors, debtor)
+		}
+	}
+
+	id, err := primitive.ObjectIDFromHex(query.Id)
+	if err != nil {
+		return models.Debt{}, fmt.Errorf("invalid debtId")
+	}
+
+	creditor, err := primitive.ObjectIDFromHex(query.Creditor)
+	if err != nil {
+		return models.Debt{}, fmt.Errorf("invalid Creditor")
+	}
+
 	debtDb := d.getDebtDatabase()
 	query_options := options.FindOneAndUpdate()
 	rd := options.After
@@ -86,21 +107,22 @@ func (d *dbClient) PayDebt(query bson.M) (models.Debt, error) {
 		Filters: []interface{}{
 			bson.M{
 				"elem._id": bson.M{
-					"$in": query["debtors"].([]primitive.ObjectID),
+					"$in": debtors,
 				},
 			},
 		}}
+
 	query_options.ReturnDocument = &rd
 	query_options.ArrayFilters = &af
 	var debt models.Debt
 	if err := debtDb.FindOneAndUpdate(context.Background(),
 		bson.M{
-			"_id":      query["_id"].(primitive.ObjectID),
-			"creditor": query["creditor"].(primitive.ObjectID),
+			"_id":      id,
+			"creditor": creditor,
 		},
 		bson.M{
 			"$set": bson.M{
-				"debtors.$[elem].paid": query["paid"].(bool),
+				"debtors.$[elem].paid": query.Paid,
 			},
 		},
 		query_options,
