@@ -14,35 +14,36 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (d *dbClient) CreateNewUser(usr models.User) (models.UserData, error) {
+func (d *dbClient) CreateNewUser(usr models.User) (models.GetUserResponse, error) {
 	usr.Id = primitive.NewObjectID()
 
 	userDb := d.getUserDatabase()
 	_, err := userDb.InsertOne(context.TODO(), usr)
 
-	filtered := models.UserData{
-		Id: usr.Id,
-		UserUpdate: models.UserUpdate{
-			Name:  usr.Name,
-			Email: usr.Email,
-			Path:  usr.Path,
-		},
+	filtered := models.GetUserResponse{
+		Id:             usr.Id,
+		Name:           usr.Name,
+		Email:          usr.Email,
+		Path:           usr.Path,
+		WalletAccounts: usr.WalletAccounts,
+		PixAccounts:    usr.PixAccounts,
+		CreatedBy:      usr.CreatedBy,
 	}
 	return filtered, err
 }
 
-func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, update models.UserUpdate) (models.UserData, error) {
+func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, update models.UpdateUserRequest) (models.GetUserResponse, error) {
 	userDb := d.getUserDatabase()
 
 	if update.Email != "" {
 		if _, err := mail.ParseAddress(update.Email); err != nil {
-			return models.UserData{}, err
+			return models.GetUserResponse{}, err
 		}
 	}
 
 	if update.Path != "" {
 		if err := utils.ValidateUserPath(update.Path); err != nil {
-			return models.UserData{}, err
+			return models.GetUserResponse{}, err
 		}
 	}
 
