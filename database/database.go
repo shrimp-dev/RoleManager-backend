@@ -26,12 +26,12 @@ type dbClient struct {
 type DbClient interface {
 	CheckConnection() error
 
-	CreateNewUser(usr models.User) (models.UserData, error)
-	FindUserById(usrId primitive.ObjectID) (models.UserData, error)
-	FindAllUsers() ([]models.UserData, error)
+	CreateNewUser(usr models.User) (models.GetUserResponse, error)
+	FindUserById(usrId primitive.ObjectID) (models.GetUserResponse, error)
+	FindAllUsers() ([]models.GetUserResponse, error)
 	FindDrinksOfUser(usrId primitive.ObjectID) ([]models.Drink, error)
 	FindDebtsOfUser(usrId primitive.ObjectID) ([]models.Debt, error)
-	UpdateUserById(usrId primitive.ObjectID, usr models.UserUpdate) (models.UserData, error)
+	UpdateUserById(usrId primitive.ObjectID, update models.UpdateUserRequest) (models.GetUserResponse, error)
 	UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]models.Drink, error)
 
 	CreateNewDrink(drink models.Drink) (models.Drink, error)
@@ -124,14 +124,10 @@ func (d *dbClient) createSeedUser() error {
 		return fmt.Errorf("could not generate seed user. %v", err)
 	}
 	_, err = d.getUserDatabase().InsertOne(context.Background(), models.User{
-		UserData: models.UserData{
-			Id: primitive.NewObjectID(),
-			UserUpdate: models.UserUpdate{
-				Name:  "Seed",
-				Email: os.Getenv("SEED_MAIL"),
-				Path:  "https://cdn.discordapp.com/attachments/580125063186087966/930244138325131264/59MvRFdT_400x400.png",
-			},
-		},
+		Id:       primitive.NewObjectID(),
+		Name:     "Seed",
+		Email:    os.Getenv("SEED_MAIL"),
+		Path:     "https://cdn.discordapp.com/attachments/580125063186087966/930244138325131264/59MvRFdT_400x400.png",
 		Password: seedPwd,
 		Salt:     seedSalt,
 	})

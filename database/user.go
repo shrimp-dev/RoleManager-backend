@@ -52,28 +52,29 @@ func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, update models.Update
 	query_options.ReturnDocument = &rd
 
 	result_fnu := userDb.FindOneAndUpdate(context.Background(), bson.M{"_id": usrId}, bson.M{"$set": update}, query_options)
-	var doc_upd models.UserData
+
+	var doc_upd models.GetUserResponse
 	if err := result_fnu.Decode(&doc_upd); err != nil {
 		fmt.Println("ERR")
 		fmt.Println(err)
 		fmt.Println(doc_upd)
-		return models.UserData{}, err
+		return models.GetUserResponse{}, err
 	}
 	return doc_upd, nil
 }
 
-func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.UserData, error) {
+func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.GetUserResponse, error) {
 	cur, err := d.getUserDatabase().Find(context.TODO(), bson.M{"_id": usrId}, nil)
 	if err != nil {
-		return models.UserData{}, err
+		return models.GetUserResponse{}, err
 	}
 
 	ok := cur.Next(context.TODO())
 	if !ok {
-		return models.UserData{}, errors.New("user not found")
+		return models.GetUserResponse{}, errors.New("user not found")
 	}
 
-	var user models.UserData
+	var user models.GetUserResponse
 	err = cur.Decode(&user)
 	if err != nil {
 		log.Fatal(err)
@@ -82,18 +83,18 @@ func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.UserData, erro
 	return user, nil
 }
 
-func (d *dbClient) FindAllUsers() ([]models.UserData, error) {
+func (d *dbClient) FindAllUsers() ([]models.GetUserResponse, error) {
 
 	cur, err := d.getUserDatabase().Find(context.TODO(), bson.D{{}}, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	var users []models.UserData
+	var users []models.GetUserResponse
 
 	for cur.Next(context.TODO()) {
 		//Create a value into which the single document can be decoded
-		var elem models.UserData
+		var elem models.GetUserResponse
 		err := cur.Decode(&elem)
 		if err != nil {
 			log.Fatal(err)
@@ -134,13 +135,11 @@ func (d *dbClient) VerifyUserPassword(email string, password string, data *model
 	}
 
 	*data = models.LoginResponse{
-		UserData: models.UserData{
-			Id: user.Id,
-			UserUpdate: models.UserUpdate{
-				Name:  user.Name,
-				Email: user.Email,
-				Path:  user.Path,
-			},
+		GetUserResponse: models.GetUserResponse{
+			Id:    user.Id,
+			Name:  user.Name,
+			Email: user.Email,
+			Path:  user.Path,
 		},
 		Token: token,
 	}
