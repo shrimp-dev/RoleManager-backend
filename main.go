@@ -17,8 +17,10 @@ func main() {
 
 	client, err := database.NewClient()
 	if err != nil {
+		fmt.Println(err.Error())
 		panic(err)
 	}
+
 	err = client.CheckConnection()
 	if err != nil {
 		panic(err)

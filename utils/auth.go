@@ -31,8 +31,8 @@ func HashPassword(password string, salt []byte) (string, error) {
 	if _, err := sha512Hasher.Write([]byte(password)); err != nil {
 		return "", err
 	}
-	hashedPasswordBytes := sha512Hasher.Sum(salt)
 
+	hashedPasswordBytes := sha512Hasher.Sum(salt)
 	base64EncodedPasswordHash := base64.URLEncoding.EncodeToString(hashedPasswordBytes)
 
 	return base64EncodedPasswordHash, nil
@@ -43,6 +43,7 @@ func MatchPassword(hashedPassword string, currPassword string, salt []byte) (boo
 	if err != nil {
 		return false, err
 	}
+
 	return hashedPassword == currPasswordHash, nil
 }
 
@@ -61,14 +62,17 @@ func ValidatePassword(password []byte) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
 	lchar, err := regexp.Compile(`[a-z]+`)
 	if err != nil {
 		return false, err
 	}
+
 	nchar, err := regexp.Compile(`\d+`)
 	if err != nil {
 		return false, err
 	}
+
 	// Contains script text or space
 	soschar, err := regexp.Compile(`[!|@|#|\$|%|\*|-|_|\+|=]`)
 	if err != nil {
@@ -100,6 +104,7 @@ func GenerateAuthenticationToken(id string, secret string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return tokenString, nil
 }
 

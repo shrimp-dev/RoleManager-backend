@@ -58,24 +58,29 @@ func (r *Router) AuthenticateHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
+
 	var bdJn struct {
 		Email    string `bson:"email" json:"email"`
 		Password string `bson:"password" json:"password"`
 	}
+
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
+
 	var data models.LoginResponse
 	ok, err := r.Client.VerifyUserPassword(bdJn.Email, bdJn.Password, &data)
 	if err != nil {
 		http.Error(w, "Error validating user password", http.StatusBadRequest)
 		return
 	}
+
 	if !ok {
 		http.Error(w, "Password in request does not match", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(data)
 	if err != nil {
 		http.Error(w, "Error converting data to response", http.StatusInternalServerError)

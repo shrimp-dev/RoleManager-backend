@@ -39,6 +39,7 @@ func (d *dbClient) UpdateUserById(usrId primitive.ObjectID, update models.UserUp
 			return models.UserData{}, err
 		}
 	}
+
 	if update.Path != "" {
 		if err := utils.ValidateUserPath(update.Path); err != nil {
 			return models.UserData{}, err
@@ -65,6 +66,7 @@ func (d *dbClient) FindUserById(usrId primitive.ObjectID) (models.UserData, erro
 	if err != nil {
 		return models.UserData{}, err
 	}
+
 	ok := cur.Next(context.TODO())
 	if !ok {
 		return models.UserData{}, errors.New("user not found")
@@ -108,23 +110,28 @@ func (d *dbClient) VerifyUserPassword(email string, password string, data *model
 	if err != nil {
 		return false, err
 	}
+
 	ok := cur.Next(context.TODO())
 	if !ok {
 		return false, errors.New("user not found")
 	}
+
 	var user models.User
 	err = cur.Decode(&user)
 	if err != nil {
 		return false, err
 	}
+
 	ok, err = utils.MatchPassword(user.Password, password, []byte(user.Salt))
 	if err != nil || !ok {
 		return false, err
 	}
+
 	token, err := utils.GenerateAuthenticationToken(user.Id.Hex(), utils.AUTH)
 	if err != nil {
 		return ok, err
 	}
+
 	*data = models.LoginResponse{
 		UserData: models.UserData{
 			Id: user.Id,

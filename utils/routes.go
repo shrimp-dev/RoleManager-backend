@@ -12,9 +12,11 @@ func ValidateUserPath(path string) error {
 		`(https:\/\/cdn\.discordapp\.com\/attachments\/){1}(\w|\W)*(\.png|\.jpeg|\.jpg|\.gif)$`,
 		[]byte(path),
 	)
+
 	if err != nil {
 		return err
 	}
+
 	if !matched {
 		return errors.New("invalid path")
 	}
@@ -28,14 +30,18 @@ func ValidateBody(body interface{}, ignore ...string) bool {
 		for i := 0; i < v.NumField(); i++ {
 			f = append(f, v.Type().Field(i).Name)
 		}
+
 	}
+
 	for i := 0; i < len(f); i++ {
 		if found := findAndRemoveField(&ignore, f[i]); found {
 			continue
 		}
+
 		if isZero := v.FieldByName(f[i]).IsZero(); isZero {
 			return false
 		}
+
 	}
 	return true
 }
