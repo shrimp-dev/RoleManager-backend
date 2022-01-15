@@ -12,6 +12,18 @@ type GetUserResponse struct {
 	CreatedBy      primitive.ObjectID `bson:"createdby" json:"createdby"`
 }
 
+// Drinks
+
+type CreateDrinkResponse struct {
+	Inserted Drink `bson:"inserted" json:"inserted"`
+}
+
+type UpdateDrinkDoneResponse struct {
+	Updated []Drink `bson:"updated" json:"updated"`
+}
+
+// Auth
+
 type LoginResponse struct {
 	GetUserResponse
 	Token string `bson:"token" json:"token"`

@@ -7,3 +7,15 @@ type UpdateUserRequest struct {
 	PixAccounts    PixAccounts    `bson:"pixAcc,omitempty" json:"pixAcc,omitempty"`
 	WalletAccounts WalletAccounts `bson:"WaletAcc,omitempty" json:"WalletAcc,omitempty"`
 }
+
+// Drinks
+
+type CreateDrinkRequest struct {
+	UsrId string `bson:"usrId" json:"usrId"`
+	Name  string `bson:"name" json:"name"`
+}
+
+type UpdateDrinkDoneRequest struct {
+	Ids  []string `bson:"_id" json:"_id"`
+	Done bool     `bson:"status" json:"status"`
+}
