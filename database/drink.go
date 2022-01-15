@@ -81,10 +81,12 @@ func (d *dbClient) UpdateDrinksByIds(usrIds []primitive.ObjectID, done bool) ([]
 	if err != nil {
 		return nil, err
 	}
+
 	cursor, err := drinkDb.Find(context.Background(), filter)
 	if err != nil {
 		return nil, err
 	}
+
 	var drinks []models.Drink
 	if err := cursor.All(context.Background(), &drinks); err != nil {
 		return nil, err

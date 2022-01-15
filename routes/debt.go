@@ -18,6 +18,7 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
+
 	var bdJn struct {
 		Description string             `bson:"description,omitempty" json:"description,omitempty"`
 		Creditor    primitive.ObjectID `bson:"creditor,omitempty" json:"creditor,omitempty"`
@@ -27,6 +28,7 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		} `bson:"debtors,omitempty" json:"debtors,omitempty"`
 		Amount float32 `bson:"amount,omitempty" json:"amount,omitempty"`
 	}
+
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -44,12 +46,14 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 			http.Error(w, "Invalid amount in debtor", http.StatusBadRequest)
 			return
 		}
+
 		amount := debtor.Amount
 		debt_remaining -= amount
 		if debt_remaining < float32(0) {
 			http.Error(w, "The value paid by all debtors is higher than the debt value", http.StatusBadRequest)
 			return
 		}
+
 		debtors = append(debtors, models.Debtor{
 			Id:     debtor.Id,
 			Amount: amount,
@@ -59,11 +63,13 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "The value paid by all debtors is lower than the debt value", http.StatusBadRequest)
 		return
 	}
+
 	var debt models.Debt
 	if err := json.Unmarshal(body, &debt); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
+
 	debt.Debtors = debtors
 	creditor, _ := primitive.ObjectIDFromHex(req.Context().Value("usrToken").(models.AccessTokenClaims).Id)
 	debt.Creditor = creditor
@@ -72,11 +78,13 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error creating new debt", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(debt)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	w.WriteHeader(http.StatusCreated)
 	w.Write(res)
 }
@@ -88,16 +96,19 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid id in request", http.StatusBadRequest)
 		return
 	}
+
 	creditor, _ := primitive.ObjectIDFromHex(req.Context().Value("usrToken").(models.AccessTokenClaims).Id)
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
+
 	var bdJn struct {
 		Debtors []string
 		Paid    bool `json:"paid"`
 	}
+
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -123,11 +134,13 @@ func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error updating debt", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(debt)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	w.Write(res)
 }
 
@@ -139,16 +152,19 @@ func (r *Router) GetDebtHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid id in request", http.StatusBadRequest)
 		return
 	}
+
 	debt, err := r.Client.FindDebtById(id)
 	if err != nil {
 		http.Error(w, "Error finding the debt", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(debt)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	w.Write(res)
 }
 
@@ -158,11 +174,13 @@ func (r *Router) GetDebtsHandler(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Error finding debts", http.StatusBadRequest)
 		return
 	}
+
 	res, err := json.Marshal(debt)
 	if err != nil {
 		http.Error(w, "Error converting data to send back", http.StatusInternalServerError)
 		return
 	}
+
 	if len(debt) == 0 {
 		res = []byte("[]")
 	}

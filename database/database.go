@@ -91,6 +91,7 @@ func (d *dbClient) CheckConnection() error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -134,6 +135,7 @@ func (d *dbClient) createSeedUser() error {
 		Password: seedPwd,
 		Salt:     seedSalt,
 	})
+
 	if err != nil {
 		return fmt.Errorf("could not generate seed user. %v", err)
 	}
