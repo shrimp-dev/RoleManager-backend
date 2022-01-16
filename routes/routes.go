@@ -59,11 +59,7 @@ func (r *Router) AuthenticateHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var bdJn struct {
-		Email    string `bson:"email" json:"email"`
-		Password string `bson:"password" json:"password"`
-	}
-
+	var bdJn models.AuthenticateUserRequest
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return

@@ -82,13 +82,9 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	}
 
 	inserted, err := r.Client.CreateNewUser(models.User{
-		UserData: models.UserData{
-			UserUpdate: models.UserUpdate{
-				Name:  bdJn.Name,
-				Email: bdJn.Email,
-				Path:  bdJn.Path,
-			},
-		},
+		Name:      bdJn.Name,
+		Email:     bdJn.Email,
+		Path:      bdJn.Path,
 		Password:  hash,
 		Salt:      salt,
 		CreatedBy: bdJn.CreatedBy,
@@ -101,8 +97,15 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	token, _ := utils.GenerateAuthenticationToken(inserted.Id.Hex(), utils.AUTH)
 
 	res, err := json.Marshal(models.LoginResponse{
-		UserData: inserted,
-		Token:    token,
+		//Todo: Put Login Response
+		GetUserResponse: models.GetUserResponse{
+			Id:    inserted.Id,
+			Name:  bdJn.Name,
+			Email: bdJn.Email,
+			Path:  bdJn.Path,
+			CreatedBy: bdJn.CreatedBy,
+		},
+		Token: token,
 	})
 
 	if err != nil {
@@ -183,7 +186,7 @@ func (r *Router) UpdateUserHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var bdJn models.UserUpdate
+	var bdJn models.UpdateUserRequest
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return

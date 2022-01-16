@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -19,16 +18,7 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var bdJn struct {
-		Description string             `bson:"description,omitempty" json:"description,omitempty"`
-		Creditor    primitive.ObjectID `bson:"creditor,omitempty" json:"creditor,omitempty"`
-		Debtors     []struct {
-			Id     primitive.ObjectID `bson:"_id,omitempty" json:"_id,omitempty"`
-			Amount float32            `bson:"amount,omitempty" json:"amount,omitempty"`
-		} `bson:"debtors,omitempty" json:"debtors,omitempty"`
-		Amount float32 `bson:"amount,omitempty" json:"amount,omitempty"`
-	}
-
+	var bdJn models.CreateDebtRequest
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
@@ -91,45 +81,21 @@ func (r *Router) CreateDebtHandler(w http.ResponseWriter, req *http.Request) {
 
 func (r *Router) PayDebtHandler(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	id, err := primitive.ObjectIDFromHex(vars["id"])
-	if err != nil {
-		http.Error(w, "Invalid id in request", http.StatusBadRequest)
-		return
-	}
-
-	creditor, _ := primitive.ObjectIDFromHex(req.Context().Value("usrToken").(models.AccessTokenClaims).Id)
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		http.Error(w, "An error occurred while trying to read the body", http.StatusBadRequest)
 		return
 	}
 
-	var bdJn struct {
-		Debtors []string
-		Paid    bool `json:"paid"`
-	}
-
+	var bdJn models.PayDebtRequest
 	if err := json.Unmarshal(body, &bdJn); err != nil {
 		http.Error(w, "Invalid JSON sent in body", http.StatusBadRequest)
 		return
 	}
 
-	var debtors []primitive.ObjectID
-	for i := 0; i < len(bdJn.Debtors); i++ {
-		if debtor, err := primitive.ObjectIDFromHex(bdJn.Debtors[i]); err != nil {
-			http.Error(w, "Invalid debtor in body", http.StatusBadRequest)
-			return
-		} else {
-			debtors = append(debtors, debtor)
-		}
-	}
-
-	debt, err := r.Client.PayDebt(bson.M{
-		"_id":      id,
-		"creditor": creditor,
-		"debtors":  debtors,
-		"paid":     bdJn.Paid,
-	})
+	bdJn.Creditor = req.Context().Value("usrToken").(models.AccessTokenClaims).Id
+	bdJn.Id = vars["id"]
+	debt, err := r.Client.PayDebt(bdJn)
 	if err != nil {
 		http.Error(w, "Error updating debt", http.StatusBadRequest)
 		return
