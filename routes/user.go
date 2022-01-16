@@ -98,6 +98,13 @@ func (r *Router) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 
 	res, err := json.Marshal(models.LoginResponse{
 		//Todo: Put Login Response
+		GetUserResponse: models.GetUserResponse{
+			Id:    inserted.Id,
+			Name:  bdJn.Name,
+			Email: bdJn.Email,
+			Path:  bdJn.Path,
+			CreatedBy: bdJn.CreatedBy,
+		},
 		Token: token,
 	})
 
